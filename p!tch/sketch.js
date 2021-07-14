@@ -2,9 +2,8 @@
 "P1TCH!" is a game designed to train
 your musical sight reading skills.
 Each time you see the quaver moving on
-the sheet music, you must play that sound
+the sheet music, you must play that note
 in your instrument.
-
 This project is still being developed and
 so far I've just tested it with a piano and
 even on the piano the scoring part isn't always
@@ -19,7 +18,8 @@ var img, img2,correct, title, h;
 var maxAmp = 0;
 var loudestFreq =0;
 var frequency;
-//positions:
+
+// positions, tone and points:
 var c4 = 336,
     d4 = 330,
     e4 = 324,
@@ -36,12 +36,13 @@ var c4 = 336,
     tone=336,
     points=0;
 
-//arrays with positions and frequencies:
+// arrays with positions and frequencies:
 var pos= [c4,d4,e4,f4,g4,a4,b4,c5,d5,e5,f5,g5,a5];
 var frequencies= [522,586,660,699,785,880,990,1050,1180,1320,1402,1574,1768];
-var options= [0,1,2,3,4,5,6,7,8]//,9,10,11,12];
+var options= [0,1,2,3,4,5,6,7,8];//,9,10,11,12];
+var tolerance = 60;
 
-//screen's width and height:
+// screen's width and height:
 const xend = 400;
 const yend = 595;
 
@@ -54,19 +55,17 @@ function preload(){
 }
 
 function setup() {
-  //creating the canvas:
+  // creating the canvas:
   createCanvas(xend, yend);
   
   frameRate(30);
-  //setting up the microphone:
+  // setting up the microphone:
   mic = new p5.AudioIn();
    fft = new p5.FFT(0.8, 8192);
    fft.setInput(mic);
   
-  //function game(){
-    //run function "tune" every 5 seconds:
+    // run function "tune" every 5 seconds:
   	setInterval(display, 5000);
- // }
   
   function display(){
   background(225, 210, 130);
@@ -76,17 +75,17 @@ function setup() {
   
   image(img, -20, 216, 110, 160);
   
-    //sheet music lines:
+  // sheet music lines:
   strokeWeight(2);
   line(158, c4, 188,c4);
-  line(0, e4, xend,e4 );
-  line(0, g4, xend,g4 );
-  line(0, b4, xend,b4 );
-  line(0, d5, xend,d5 );
-  line(0, f5, xend,f5 );
-  line(158, a5, 188,a5 );
+  line(0, e4, xend,e4);
+  line(0, g4, xend,g4);
+  line(0, b4, xend,b4);
+  line(0, d5, xend,d5);
+  line(0, f5, xend,f5);
+  line(158, a5, 188,a5);
 	
-  //generate random notes:
+  // generate random notes:
  tone = random(options);
  image(img2, 150, pos[tone]-52, 60,60);
     
@@ -98,8 +97,8 @@ function setup() {
 }
 
 function draw(){
-  //getting the frequency of the loudest sound:
-mic.start();
+  // getting the frequency of the loudest sound:
+  mic.start();
   	
    var nyquist = sampleRate() / 2; // 22050
     var spectrum = fft.analyze(); // array of amplitudes in bins
@@ -114,34 +113,34 @@ mic.start();
         }
     }
   
-	//printing the frequency:	
+  // printing the frequency:	
   frequency = largestBin * (nyquist / numberOfBins);
     
-  // eliminating low frequencies that may interfere with the score:
-  if(frequency >470){
+  // eliminating low-volume frequencies that may interfere with the score:
+  if(frequency > 470){
   loudestFreq = frequency;
 }
   
   print("loudest frequency =", loudestFreq);
   
-  if(frameCount%149 ==0){
-     hear(); 
-      frameCount=0;
+  // this is a wierd timer to make the hear() function run only once every new note
+  if(frameCount%149 == 0){
+     hear();
+     frameCount=0;
     }
-  
-   
-  
 }
 
 
 function hear(){
  if(maxAmp >100){
-   if(loudestFreq>=(frequencies[tone]-90) && loudestFreq<=(frequencies[tone]+90)||(loudestFreq/2)>=(frequencies[tone]-90) && (loudestFreq/2)<=(frequencies[tone]+90)){
-   
+   for(var i = 1; i<5; i++){
+     var higher_octaves = (frequencies[tone] * i)
+     var lower_octaves = (frequencies[tone] / i) 
+   if(loudestFreq>=(higher_octaves -tolerance) && loudestFreq<=(higher_octaves +tolerance)||loudestFreq>=(lower_octaves -tolerance) && loudestFreq<=(lower_octaves +tolerance)){
      points++;
-     correct.setVolume(1.0);
-  	correct.play();
-   //  loudestFreq = 0;
+     correct.setVolume(0.5);
+  	 correct.play();
+     }
    }
-}
+  }
 }
